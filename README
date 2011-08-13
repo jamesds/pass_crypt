@@ -1,3 +1,7 @@
 A simple application written in Ruby that allows the secure storage and retrieval of usernames and passwords.
 
+Dependencies
+clipboard (gem)
+xclip (package)
+
 TODO update this when I have something working
