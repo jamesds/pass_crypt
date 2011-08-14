@@ -1,8 +1,8 @@
 require "openssl"
 require "clipboard"
+require "./auth_model.rb"
 
 class PassCrypt
-	CIPHER = "aes256"
 
 	def main(args)
 		print_usage_and_quit if args.empty?
@@ -38,12 +38,27 @@ class PassCrypt
 	 		read_input("Enter password: ", false)
 		end
 
-		enc_username = crypt(:encrypt, username, passphrase, generate_salt)
-		enc_password = crypt(:encrypt, password, passphrase, generate_salt)
+		auth = AuthModel.new(args.first, username, password, passphrase)
+		auth.save
 
-		puts enc_username
-		puts enc_password
-		# TODO store encrypted username/password with ID
+		puts "Stored!"
+	end
+
+	def retrieve(args, opts={})
+		print_usage_and_quit if args.empty?
+		passphrase = read_passphrase
+
+		auth = AuthModel.new(passphrase)
+		auth.retrieve_from_db(args.first)
+
+		puts "Username: #{auth.username}"
+		puts "Password: #{auth.password}"
+	end
+
+	def list_ids
+		AuthModel.get_ids.each do |id|
+			puts id
+		end
 	end
 
 	def read_passphrase
@@ -56,24 +71,6 @@ class PassCrypt
 		input = STDIN.gets.chomp
 		system "stty echo"
 		return input
-	end
-
-	# Encrypts/decrypts data with the provided
-	# passphrase and salt.
-	#
-	# operation
-	#   :encrypt - encrypts the given data
-	#   :decrypt - decrypts the given data
-	def crypt(operation, data, passphrase, salt)
-		cipher = OpenSSL::Cipher.new(CIPHER)
-		cipher.send(operation)
-		cipher.pkcs5_keyivgen(passphrase, salt)
-		cipher.update(data)
-		cipher.final
-	end
-
-	def generate_salt
-
 	end
 
 	def print_usage_and_quit
