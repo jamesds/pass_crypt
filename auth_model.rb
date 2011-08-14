@@ -8,15 +8,16 @@ class AuthModel
 	attr_accessor :db, :id, :username, :password, :passphrase
 
 	def retrieve_from_db(id)
-		result = @db.execute("SELECT * FROM #{TABLE_NAME} WHERE id = ?", id)
-		
+		result = @db.execute("SELECT * FROM #{TABLE_NAME} WHERE id = ?", id).first
+		return unless result
+
 		@id = id
-		@username = crypt(:decrypt, result['username'], result['salt'])
-		@password = crypt(:decrypt, result[:password], result[:salt])
+		@username = crypt(:decrypt, result["username"], result["salt"])
+		@password = crypt(:decrypt, result["password"], result["salt"])
 	end
 
 	def self.get_ids
-		get_db.execute("SELECT id FROM #{TABLE_NAME}").map(&:id)
+		get_db.execute("SELECT id FROM #{TABLE_NAME}").map { |r| r["id"] }
 	end
 	
 	def initialize(id="", username="", password="", passphrase)
@@ -24,7 +25,7 @@ class AuthModel
 		@username = username
 		@password = password
 		@passphrase = passphrase
-		@db = get_db
+		@db = AuthModel.get_db
 	end	
 
 	def save
@@ -34,9 +35,7 @@ class AuthModel
 		@db.execute("INSERT INTO #{TABLE_NAME} VALUES (?, ?, ?, ?)", id, enc_username, enc_password, salt)
 	end
 
-	protected
-
-	def get_db
+	def self.get_db
 		db = SQLite3::Database.new(DB_NAME)
 		db.results_as_hash = true
 
@@ -47,6 +46,8 @@ class AuthModel
 	ensure
 		return db
 	end
+
+	protected
 
 	# Encrypts/decrypts data with the provided
 	# passphrase and salt.
@@ -60,6 +61,9 @@ class AuthModel
 		cipher.pkcs5_keyivgen(@passphrase, salt)
 		cipher.update(data)
 		cipher.final
+	rescue OpenSSL::Cipher::CipherError
+		puts "Bad Passphrase"
+		exit
 	end
 
 	def generate_salt
