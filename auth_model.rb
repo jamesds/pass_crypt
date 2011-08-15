@@ -33,6 +33,7 @@ class AuthModel
 		enc_username = crypt(:encrypt, username, salt)
 		enc_password = crypt(:encrypt, password, salt)
 		@db.execute("INSERT INTO #{TABLE_NAME} VALUES (?, ?, ?, ?)", id, enc_username, enc_password, salt)
+		# TODO handle overwriting (ask for confirmation, and old passphrase)
 	end
 
 	def self.get_db

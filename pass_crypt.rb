@@ -1,3 +1,5 @@
+#! /usr/bin/env ruby
+
 require "openssl"
 require "clipboard"
 require "./auth_model.rb"
@@ -51,14 +53,32 @@ class PassCrypt
 		auth = AuthModel.new(passphrase)
 		auth.retrieve_from_db(args.first)
 
+		puts "\n----------"
 		puts "Username: #{auth.username}"
-		puts "Password: #{auth.password}"
+
+		prev_contents = Clipboard.paste
+		Clipboard.copy(auth.password)
+		puts "Password: * copied to the clipboard for 10 seconds *"
+		puts "----------\n\nPress ENTER to continue"
+
+		t = Thread.new { sleep 10 }
+		Thread.new { STDIN.gets; t.kill }
+		t.join
+	ensure
+		Clipboard.copy(prev_contents)
 	end
 
 	def list_ids
 		AuthModel.get_ids.each do |id|
 			puts id
 		end
+	end
+
+	def delete(args)
+		print_usage_and_quit if args.empty?
+
+		id = args.first
+		# TODO implement deletion
 	end
 
 	def read_passphrase
