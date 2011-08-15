@@ -1,8 +1,9 @@
 #! /usr/bin/env ruby
 
+require "rubygems"
 require "openssl"
 require "clipboard"
-require "./auth_model.rb"
+require "auth_model"
 
 class PassCrypt
 
@@ -40,7 +41,7 @@ class PassCrypt
 	 		read_input("Enter password: ", false)
 		end
 
-		auth = AuthModel.new(args.first, username, password, passphrase)
+		auth = AuthModel.new(passphrase, args.first, username, password)
 		auth.save
 
 		puts "Stored!"

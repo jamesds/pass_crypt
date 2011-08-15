@@ -20,7 +20,7 @@ class AuthModel
 		get_db.execute("SELECT id FROM #{TABLE_NAME}").map { |r| r["id"] }
 	end
 	
-	def initialize(id="", username="", password="", passphrase)
+	def initialize(passphrase, id="", username="", password="")
 		@id = id
 		@username = username
 		@password = password
