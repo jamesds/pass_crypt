@@ -3,7 +3,7 @@
 require "rubygems"
 require "openssl"
 require "clipboard"
-require "auth_model"
+require_relative "auth_model"
 
 class PassCrypt
 
@@ -20,7 +20,7 @@ class PassCrypt
 		when "getp"
 			retrieve(args, :only_password => true)
 		when "list"
-			list_ids # change when set up model?
+			list_ids
 		when "del"
 			delete(args)
 		when "set"
@@ -33,15 +33,23 @@ class PassCrypt
 	def insert(args, opts={})
 		print_usage_and_quit if args.empty?
 		passphrase = read_passphrase
+		id = args.first
 
 		username = read_input("Enter username: ")
 		password = if opts[:clipboard]
 			Clipboard.paste
+			puts "Password taken from clipboard"
 		else
-	 		read_input("Enter password: ", false)
+	 		read_input("Enter password: ", true)
 		end
 
-		auth = AuthModel.new(passphrase, args.first, username, password)
+		if AuthModel.exists?(id)
+			overwrite = read_input("Already exists - overwrite? [Y/n]: ")
+			exit unless overwrite == "y" || overwrite == "Y" || overwrite == ""
+			AuthModel.delete(id)
+		end
+
+		auth = AuthModel.new(passphrase, id, username, password)
 		auth.save
 
 		puts "Stored!"
@@ -49,6 +57,11 @@ class PassCrypt
 
 	def retrieve(args, opts={})
 		print_usage_and_quit if args.empty?
+		if not AuthModel.exists?(args.first)
+			puts "Invalid entry"
+			exit
+		end
+
 		passphrase = read_passphrase
 
 		auth = AuthModel.new(passphrase)
@@ -78,20 +91,23 @@ class PassCrypt
 	def delete(args)
 		print_usage_and_quit if args.empty?
 
-		id = args.first
-		# TODO implement deletion
+		if AuthModel.delete(args.first)
+			puts "Deleted entry '#{args.first}'"
+		else
+			puts "Invalid entry"
+		end
 	end
 
 	def read_passphrase
-		read_input("Enter your secret passphrase: ", false)
+		read_input("Enter your secret passphrase: ", true)
 	end
 
-	def read_input(message, echo=true)
+	def read_input(message, secret=false)
 		puts message
-		system "stty -echo" unless echo
-		input = STDIN.gets.chomp
+		system "stty -echo" if secret
+		STDIN.gets.chomp
+	ensure
 		system "stty echo"
-		return input
 	end
 
 	def print_usage_and_quit

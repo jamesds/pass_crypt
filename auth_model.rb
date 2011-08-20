@@ -19,6 +19,15 @@ class AuthModel
 	def self.get_ids
 		get_db.execute("SELECT id FROM #{TABLE_NAME}").map { |r| r["id"] }
 	end
+
+	def self.delete(id)
+		return false unless exists?(id)
+		get_db.execute("DELETE FROM #{TABLE_NAME} WHERE id = ?", id)
+	end
+	
+	def self.exists?(id)
+		get_ids.include?(id)
+	end
 	
 	def initialize(passphrase, id="", username="", password="")
 		@id = id
@@ -28,11 +37,11 @@ class AuthModel
 		@db = AuthModel.get_db
 	end	
 
-	def save
+	def save(overwrite=true)
 		salt = generate_salt
-		enc_username = crypt(:encrypt, username, salt)
-		enc_password = crypt(:encrypt, password, salt)
-		@db.execute("INSERT INTO #{TABLE_NAME} VALUES (?, ?, ?, ?)", id, enc_username, enc_password, salt)
+		enc_username = crypt(:encrypt, @username, salt)
+		enc_password = crypt(:encrypt, @password, salt)
+		@db.execute("INSERT INTO #{TABLE_NAME} (id, username, password, salt) VALUES (?, ?, ?, ?)", @id, enc_username, enc_password, salt)
 		# TODO handle overwriting (ask for confirmation, and old passphrase)
 	end
 
