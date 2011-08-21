@@ -77,7 +77,7 @@ class AuthModel
 	end
 
 	def generate_salt
-
+		OpenSSL::Random.random_bytes(8)
 	end
 
 end

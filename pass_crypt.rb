@@ -111,11 +111,16 @@ class PassCrypt
 	end
 
 	def print_usage_and_quit
-		puts "Usage: pass_crypt <operation> (<id>)"
+		puts "Usage: pass_crypt OPERATION [ID]"
 		puts "\nOperations:"
-		puts "\tlist - displays the IDs of the stored authentication data"
+		puts "\tget\tfetches the authentication details identified by ID"
+		puts "\tput\tstores a username and password"
+		puts "\tputc\tsame as 'put', but takes password from the clipboard"
+		puts "\tdel\tdeletes an entry"
 
-		puts "\thelp - displays this usage message"
+		puts "\n\tThe following require no ID parameter:"
+		puts "\tlist\tdisplays the IDs of the stored authentication data"
+		puts "\thelp\tdisplays this usage message"
 		exit
 	end
 end
