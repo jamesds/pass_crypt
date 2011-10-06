@@ -3,7 +3,7 @@
 require "rubygems"
 require "openssl"
 require "clipboard"
-require_relative "auth_model"
+require File.join(File.dirname(__FILE__), "auth_model")
 
 class PassCrypt
 
