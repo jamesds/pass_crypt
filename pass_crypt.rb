@@ -1,7 +1,6 @@
 #! /usr/bin/env ruby
 
 require "rubygems"
-require "openssl"
 require "clipboard"
 require File.join(File.dirname(__FILE__), "auth_model")
 

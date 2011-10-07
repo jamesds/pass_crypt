@@ -1,4 +1,5 @@
 require "sqlite3"
+require "openssl"
 
 class AuthModel
 	TABLE_NAME = "vault"
@@ -12,8 +13,8 @@ class AuthModel
 		return unless result
 
 		@id = id
-		@username = crypt(:decrypt, result["username"], result["salt"])
-		@password = crypt(:decrypt, result["password"], result["salt"])
+		@username = decrypt(result["username"], result["salt"])
+		@password = decrypt(result["password"], result["salt"])
 	end
 
 	def self.get_ids
@@ -39,9 +40,8 @@ class AuthModel
 
 	def save(overwrite=true)
 		salt = generate_salt
-		enc_username = crypt(:encrypt, @username, salt)
-		enc_password = crypt(:encrypt, @password, salt)
-		@db.execute("INSERT INTO #{TABLE_NAME} (id, username, password, salt) VALUES (?, ?, ?, ?)", @id, enc_username, enc_password, salt)
+		@db.execute("INSERT INTO #{TABLE_NAME} (id, username, password, salt) VALUES (?, ?, ?, ?)",
+								@id, encrypt(@username, salt), encrypt(@password, salt), salt)
 		# TODO handle overwriting (ask for confirmation, and old passphrase)
 	end
 
@@ -59,13 +59,21 @@ class AuthModel
 
 	protected
 
+	def encrypt(data, salt)
+		cipher(:encrypt, data, salt)
+	end
+
+	def decrypt(data, salt)
+		cipher(:decrypt, data, salt)
+	end
+
 	# Encrypts/decrypts data with the provided
 	# passphrase and salt.
 	#
 	# operation
 	#   :encrypt - encrypts the given data
 	#   :decrypt - decrypts the given data
-	def crypt(operation, data, salt)
+	def cipher(operation, data, salt)
 		cipher = OpenSSL::Cipher.new(CIPHER)
 		cipher.send(operation)
 		cipher.pkcs5_keyivgen(@passphrase, salt)
