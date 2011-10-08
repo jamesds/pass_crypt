@@ -52,7 +52,7 @@ class AuthModel
 		db.execute("SELECT COUNT(*) FROM #{TABLE_NAME}")
 	rescue SQLite3::SQLException
 		# create table if it doesn't exist
-		db.execute("CREATE TABLE #{TABLE_NAME} (id STRING, username STRING, password STRING, salt STRING)")
+		db.execute("CREATE TABLE #{TABLE_NAME} (id STRING PRIMARY KEY, username STRING, password STRING, salt STRING)")
 	ensure
 		return db
 	end

@@ -36,8 +36,8 @@ class PassCrypt
 
 		username = read_input("Enter username: ")
 		password = if opts[:clipboard]
-			Clipboard.paste
 			puts "Password taken from clipboard"
+			Clipboard.paste
 		else
 	 		read_input("Enter password: ", true)
 		end
