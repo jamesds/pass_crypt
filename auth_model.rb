@@ -6,7 +6,7 @@ class AuthModel
 	DB_NAME = "crypt.db"
 	CIPHER = "aes256"
 
-	attr_accessor :db, :id, :username, :password, :passphrase
+	attr_accessor :db, :id, :username, :password, :passphrase_digest
 
 	def retrieve_from_db(id)
 		result = @db.execute("SELECT * FROM #{TABLE_NAME} WHERE id = ?", id).first
@@ -34,7 +34,7 @@ class AuthModel
 		@id = id
 		@username = username
 		@password = password
-		@passphrase = passphrase
+		@passphrase_digest = get_digest(passphrase)
 		@db = AuthModel.get_db
 	end	
 
@@ -42,7 +42,6 @@ class AuthModel
 		salt = generate_salt
 		@db.execute("INSERT INTO #{TABLE_NAME} (id, username, password, salt) VALUES (?, ?, ?, ?)",
 								@id, encrypt(@username, salt), encrypt(@password, salt), salt)
-		# TODO handle overwriting (ask for confirmation, and old passphrase)
 	end
 
 	def self.get_db
@@ -76,16 +75,20 @@ class AuthModel
 	def cipher(operation, data, salt)
 		cipher = OpenSSL::Cipher.new(CIPHER)
 		cipher.send(operation)
-		cipher.pkcs5_keyivgen(@passphrase, salt)
-		cipher.update(data)
-		cipher.final
+		cipher.key = @passphrase_digest
+		cipher.iv = salt
+		cipher.update(data) + cipher.final
 	rescue OpenSSL::Cipher::CipherError
 		puts "Bad Passphrase"
 		exit
 	end
 
 	def generate_salt
-		OpenSSL::Random.random_bytes(8)
+		OpenSSL::Random.random_bytes(32)
+	end
+
+	def get_digest(data)
+		Digest::SHA256.digest(data)
 	end
 
 end
