@@ -5,38 +5,23 @@ require "clipboard"
 require File.join(File.dirname(__FILE__), "auth_model")
 
 class PassCrypt
+	DEFAULT_PASSWORD_DISPLAY_TIME = 10 # seconds
 
 	def main(args)
 		print_usage_and_quit if args.empty?
-		case(args.join " ")
-		when /put\s+\w+\z/
-			insert(format_id(args))
-		when /putc\s+\w+\z/
-			insert(format_id(args), :clipboard => true)
-		when /get\s+\w+\z/
-			retrieve(format_id(args))
-		when /getp\s+\w+\z/
-			retrieve(format_id(args), nil, :only_password => true)
-		when /get\s+\w+\s+time\s+\d+\z/
-			retrieve(format_id(args), format_time(args))
-		when /getp\s+\w+\s+time\s+\d+\z/
-			retrieve(format_id(args), format_time(args), :only_password => true)
-		when /list/
+
+		case args.join(" ")
+		when /^put(c)? (\w+)$/
+			insert($2, :clipboard => $1)
+		when /^get(p?) (\w+)(?: -t (\d+))?$/
+			retrieve($2, :password_time => $3.to_i, :only_password => $1)
+		when /^(list|ls)$/
 			list_ids
-		when /del\s+\w+\z/
-			delete(format_id(args))
+		when /^del (\w+)$/
+			delete($1)
 		else
 			print_usage_and_quit
 		end
-	end
-
-	def format_id(args)
-		args[1]
-
-	end
-	
-	def format_time(args)
-		args[3].to_i
 	end
 
 	def insert(id, opts={})
@@ -62,7 +47,10 @@ class PassCrypt
 		puts "Stored!"
 	end
 
-	def retrieve(id, time=nil, opts={})
+	def retrieve(id, opts={})
+		user_delay = opts[:password_time].to_i
+		time = user_delay > 0 ? user_delay : DEFAULT_PASSWORD_DISPLAY_TIME
+
 		if not AuthModel.exists?(id)
 			puts "Invalid entry" 
 			exit
@@ -79,7 +67,6 @@ class PassCrypt
 		prev_contents = Clipboard.paste
 		Clipboard.copy(auth.password)
 
-		time ||= 10
 		puts "Password: * copied to the clipboard for #{time} seconds *"
 		puts "----------\n\nPress ENTER to continue"
 
@@ -91,9 +78,7 @@ class PassCrypt
 	end
 
 	def list_ids
-		AuthModel.get_ids.each do |id|
-			puts id
-		end
+		puts AuthModel.get_ids.sort.join("\n")
 	end
 
 	def delete(id)
