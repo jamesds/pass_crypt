@@ -9,11 +9,10 @@ class PassCrypt
 
 	def main(args)
 		print_usage_and_quit if args.empty?
-
 		case args.join(" ")
 		when /^put(c)? (\w+)$/
 			insert($2, :clipboard => $1)
-		when /^get(p?) (\w+)(?: -t (\d+))?$/
+		when /^get(p)? (\w+)(?: -t (\d+))?$/
 			retrieve($2, :password_time => $3.to_i, :only_password => $1)
 		when /^(list|ls)$/
 			list_ids
@@ -114,7 +113,7 @@ class PassCrypt
 		puts "\tlist\tdisplays the IDs of the stored authentication data"
 		puts "\thelp\tdisplays this usage message"
 		puts "\nOption:"
-		puts "\ttime\tholds the password in the clipboard for the given value in seconds. Only available for get and getp"
+		puts "\t-t\tholds the password in the clipboard for the given time in seconds. Only available for get and getp"
 		exit
 	end
 end
