@@ -6,9 +6,10 @@ require File.join(File.dirname(__FILE__), "auth_model")
 
 class PassCrypt
 	DEFAULT_PASSWORD_DISPLAY_TIME = 10 # seconds
+	USER_FOLDER = File.join(ENV['HOME'], ".pass_crypt")
 
 	def main(args)
-		print_usage_and_quit if args.empty?
+		init_config_folder
 
 		case args.join(" ")
 		when /^put(c)? (\w+)$/
@@ -115,6 +116,13 @@ class PassCrypt
 		puts "\thelp\tdisplays this usage message"
 		puts "\nOption:"
 		puts "\ttime\tholds the password in the clipboard for the given value in seconds. Only available for get and getp"
+		exit
+	end
+
+	def init_config_folder
+		Dir.mkdir(USER_FOLDER) unless Dir.exists?(USER_FOLDER)
+	rescue
+		puts "Fatal Error: cannot access or create #{USER_FOLDER}"
 		exit
 	end
 end

@@ -24,7 +24,7 @@ Using Git, clone the repository:
 ## Usage
 Simply run pass\_crypt with no parameters to be shown brief usage instructions.
 
-'crypt.db' in the application directory is the SQLite database.  It may be wise to make backups of this file.
+The SQLite database containing the encrypted data is kept in '~/.pass\_crypt/crypt.db'.  It may be wise to make backups of this file.
 
 ## License
 

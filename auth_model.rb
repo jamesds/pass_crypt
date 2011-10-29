@@ -45,7 +45,7 @@ class AuthModel
 	end
 
 	def self.get_db
-		db = SQLite3::Database.new(DB_NAME)
+		db = SQLite3::Database.new(File.join(PassCrypt::USER_FOLDER, DB_NAME))
 		db.results_as_hash = true
 
 		db.execute("SELECT COUNT(*) FROM #{TABLE_NAME}")
