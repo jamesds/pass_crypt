@@ -8,32 +8,40 @@ class PassCrypt
 
 	def main(args)
 		print_usage_and_quit if args.empty?
-
-		case(args.shift)
-		when "put"
-			insert(args)
-		when "putc"
-			insert(args, :clipboard => true)
-		when "get"
-			retrieve(args)
-		when "getp"
-			retrieve(args, :only_password => true)
-		when "list"
+		case(args.join " ")
+		when /put\s+\w+\z/
+			insert(format_id(args))
+		when /putc\s+\w+\z/
+			insert(format_id(args), :clipboard => true)
+		when /get\s+\w+\z/
+			retrieve(format_id(args))
+		when /getp\s+\w+\z/
+			retrieve(format_id(args), nil, :only_password => true)
+		when /get\s+\w+\s+time\s+\d+\z/
+			retrieve(format_id(args), format_time(args))
+		when /getp\s+\w+\s+time\s+\d+\z/
+			retrieve(format_id(args), format_time(args), :only_password => true)
+		when /list/
 			list_ids
-		when "del"
-			delete(args)
-		when "set"
-			set_configs(args)
+		when /del\s+\w+\z/
+			delete(format_id(args))
 		else
 			print_usage_and_quit
 		end
 	end
 
-	def insert(args, opts={})
-		print_usage_and_quit if args.empty?
-		passphrase = read_passphrase
-		id = args.first
+	def format_id(args)
+		args[1]
 
+	end
+	
+	def format_time(args)
+		args[3].to_i
+	end
+
+	def insert(id, opts={})
+		passphrase = read_passphrase
+		
 		username = read_input("Enter username: ")
 		password = if opts[:clipboard]
 			puts "Password taken from clipboard"
@@ -54,27 +62,28 @@ class PassCrypt
 		puts "Stored!"
 	end
 
-	def retrieve(args, opts={})
-		print_usage_and_quit if args.empty?
-		if not AuthModel.exists?(args.first)
-			puts "Invalid entry"
+	def retrieve(id, time=nil, opts={})
+		if not AuthModel.exists?(id)
+			puts "Invalid entry" 
 			exit
 		end
-
+		
 		passphrase = read_passphrase
 
 		auth = AuthModel.new(passphrase)
-		auth.retrieve_from_db(args.first)
+		auth.retrieve_from_db(id)
 
 		puts "\n----------"
-		puts "Username: #{auth.username}"
+		puts "Username: #{auth.username}" unless opts[:only_password]
 
 		prev_contents = Clipboard.paste
 		Clipboard.copy(auth.password)
-		puts "Password: * copied to the clipboard for 10 seconds *"
+
+		time ||= 10
+		puts "Password: * copied to the clipboard for #{time} seconds *"
 		puts "----------\n\nPress ENTER to continue"
 
-		t = Thread.new { sleep 10 }
+		t = Thread.new { sleep time }
 		Thread.new { STDIN.gets; t.kill }
 		t.join
 	ensure
@@ -87,11 +96,9 @@ class PassCrypt
 		end
 	end
 
-	def delete(args)
-		print_usage_and_quit if args.empty?
-
-		if AuthModel.delete(args.first)
-			puts "Deleted entry '#{args.first}'"
+	def delete(id)
+		if AuthModel.delete(id)
+			puts "Deleted entry '#{id}'"
 		else
 			puts "Invalid entry"
 		end
@@ -110,9 +117,10 @@ class PassCrypt
 	end
 
 	def print_usage_and_quit
-		puts "Usage: pass_crypt OPERATION [ID]"
+		puts "Usage: pass_crypt OPERATION [ID] [OPTION VALUE]"
 		puts "\nOperations:"
 		puts "\tget\tfetches the authentication details identified by ID"
+		puts "\tgetp\tfetches only the password identified by ID"
 		puts "\tput\tstores a username and password"
 		puts "\tputc\tsame as 'put', but takes password from the clipboard"
 		puts "\tdel\tdeletes an entry"
@@ -120,6 +128,8 @@ class PassCrypt
 		puts "\n\tThe following require no ID parameter:"
 		puts "\tlist\tdisplays the IDs of the stored authentication data"
 		puts "\thelp\tdisplays this usage message"
+		puts "\nOption:"
+		puts "\ttime\tholds the password in the clipboard for the given value in seconds. Only available for get and getp"
 		exit
 	end
 end
