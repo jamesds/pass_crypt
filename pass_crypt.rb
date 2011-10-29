@@ -12,7 +12,7 @@ class PassCrypt
 		case args.join(" ")
 		when /^put(c)? (\w+)$/
 			insert($2, :clipboard => $1)
-		when /^get(p?) (\w+)(?: -t (\d+))?$/
+		when /^get(p)? (\w+)(?: -t (\d+))?$/
 			retrieve($2, :password_time => $3.to_i, :only_password => $1)
 		when /^(list|ls)$/
 			list_ids
